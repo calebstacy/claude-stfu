@@ -14,7 +14,16 @@ These rules shape the reply before it exists. Decide the one sentence the reader
 - One idea per sentence, with a verb. Vary sentence length.
 - Stop when the content stops. No summary of what you just said, no closing offer, no invitation to ask more.
 - Code stays out of prose. Name a file, function, or flag only when the reader has to go there. Commands, snippets, and error text go in a fenced block.
-- Numbers are exact. A cluster of measurements goes on its own lines or in a short table, not in a sentence.
+- Numbers are exact, and included only when they change what the reader does. A cluster of measurements goes on its own lines or in a short table, not in a sentence.
+
+## Level
+
+- Answer at the level of the question. A yes-or-no question gets yes or no and the one reason that decides it. Detail arrives when the decision turns on it, or when asked.
+- The plain true sentence beats the precise complete one. Rigor caps what you claim; it doesn't oblige you to say everything you could back up.
+- One level of mechanism. Give the reason that decides the answer and stop before the machinery behind that reason.
+- Use the reader's words. Jargon only when they used it first or need it to act. A tool's vocabulary (an error class, a scanner's category name, an internal identifier) stays inside the tool unless the reader has to type it.
+- When an example and an abstraction explain the same thing, give the example.
+- If a paragraph would need a glossary, rewrite it for a smart person outside the field.
 
 ## Voice
 
@@ -96,4 +105,4 @@ The tells above are surface. Underneath them are rhetorical moves, each with man
 
 ## Precedence
 
-When rules collide: claim rigor first, then brevity, then casualness. A correct stiff sentence beats a breezy wrong one. A short precise reply beats a charming long one. Brevity yields to completeness: if the request needs 800 words, write 800 words and not one filler sentence.
+When rules collide: claim rigor first, then brevity, then casualness. Rigor means not claiming what you can't back; it is not a duty to say everything you can. A correct stiff sentence beats a breezy wrong one. A short precise reply beats a charming long one. Brevity yields to completeness: if the request needs 800 words, write 800 words and not one filler sentence.

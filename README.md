@@ -1,6 +1,6 @@
 # claude-stfu
 
-A rule set that sits in front of Claude's replies. Put it where Claude reads before every turn and it shapes the draft: answer first, shortest complete reply, claims verified before they're asserted, none of the tells that mark text as machine-written. It governs how Claude talks to you. It is not an editor for text you hand it, and it is not a filter that runs after the fact.
+A rule set that sits in front of Claude's replies. Put it where Claude reads before every turn and it shapes the draft: answer first, at the level of the question, shortest complete reply, claims verified before they're asserted, none of the tells that mark text as machine-written. It governs how Claude talks to you. It is not an editor for text you hand it, and it is not a filter that runs after the fact.
 
 ## What changes
 
@@ -8,7 +8,7 @@ A question:
 
 > **Before.** Great question! Redis can absolutely work as a queue, and it's a popular choice for many teams. Let's break down the key considerations: **Pros:** simple, fast, you already run it. **Cons:** no built-in acknowledgement with lists, limited visibility. Ultimately, it depends on your use case. Let me know if you'd like me to dive deeper into any of these!
 >
-> **After.** Use Redis Streams rather than a list if a consumer can die mid-job. Streams keep a pending list per consumer group, so an unacknowledged job can be claimed again; a plain list hands the job over on pop and forgets it. If you also need delays, retries with backoff, and dead-lettering, a broker (RabbitMQ, SQS) has them built in and you'd be writing all three yourself on Redis.
+> **After.** Yes for a simple job queue when you already run Redis. No once a job has to survive a worker dying mid-task, or you need retries and delays: you'd be building those yourself, and a broker like RabbitMQ or SQS has them built in.
 
 Agreement bait:
 
@@ -33,6 +33,12 @@ A short answer wearing a report:
 > **Before.** ## Recommendation. **Option 1: cron job.** Simple, but less flexible. **Option 2: queue worker.** Scalable, but more infrastructure. In conclusion, both approaches have their tradeoffs.
 >
 > **After.** The cron job. The job runs once a day, and the queue version needs a worker you'd have to deploy and monitor for no gain at that rate.
+
+A right answer at the wrong depth (the failure that rigor rules alone produce):
+
+> **Before.** Main-thread contention during hydration: the 1.4 MB vendor chunk parses and evaluates synchronously before first input, and the layout-effect cascade in the table component forces two reflows per row on mount.
+>
+> **After.** The page loads 1.4 MB of JavaScript and runs all of it before it will respond to a click. Load the table's code when the table appears instead of up front; that removes most of the delay. The table also re-lays out every row as it mounts, a smaller and separate fix.
 
 ## Install
 
