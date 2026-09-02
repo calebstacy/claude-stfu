@@ -1,42 +1,42 @@
 # claude-stfu
 
-A rule set that sits in front of Claude's replies. Put it where Claude reads before every turn and it shapes the draft: answer first, at the level of the question, shortest complete reply, claims verified before they're asserted, none of the tells that mark text as machine-written. It governs how Claude talks to you. It is not an editor for text you hand it, and it is not a filter that runs after the fact.
+A rule set that sits in front of Claude's replies. Put it where Claude reads before every turn and it shapes the draft: answer first, at the level of the question, shortest complete reply, claims verified before they're asserted, none of the tells that mark text as machine-written. It governs how Claude talks to you. It is not an editor for text you hand it, and it is not a filter that runs after the fact. Every rule carries the name of the move it stops (praise opener, hedge cloud, hollow pivot), so when one slips through you can name it and Claude knows which rule fired; the rhetorical moves use the same names as the [slop-no-more](https://github.com/calebstacy/slop-no-more) scanner's findings.
 
 ## What changes
 
 A question:
 
-> **Before.** Great question! Redis can absolutely work as a queue, and it's a popular choice for many teams. Let's break down the key considerations: **Pros:** simple, fast, you already run it. **Cons:** no built-in acknowledgement with lists, limited visibility. Ultimately, it depends on your use case. Let me know if you'd like me to dive deeper into any of these!
+> **Before** (praise opener, false collaboration, template roadmap, sterile balance, closing offer)**.** Great question! Redis can absolutely work as a queue, and it's a popular choice for many teams. Let's break down the key considerations: **Pros:** simple, fast, you already run it. **Cons:** no built-in acknowledgement with lists, limited visibility. Ultimately, it depends on your use case. Let me know if you'd like me to dive deeper into any of these!
 >
 > **After.** Yes for a simple job queue when you already run Redis. No once a job has to survive a worker dying mid-task, or you need retries and delays: you'd be building those yourself, and a broker like RabbitMQ or SQS has them built in.
 
 Agreement bait:
 
-> **Before.** You're absolutely right, the middleware is the likely culprit here! Let me take a look and fix it.
+> **Before** (praise opener, fake agreement, deferred work)**.** You're absolutely right, the middleware is the likely culprit here! Let me take a look and fix it.
 >
 > **After.** Not the middleware. The request never reaches the app: the gateway log shows the 401 at 14:02:11 and the app log has nothing at that timestamp. The gateway's client certificate expired yesterday; renewing it is the fix.
 
 A task report:
 
-> **Before.** I did a deep dive and discovered something really interesting! It turns out the config loader was silently swallowing errors, and this changes everything about how we should approach the fix. I've gone ahead and fixed it. Next, I'll add some tests. One thing to watch: a couple of callers may depend on the old behavior. Let me know if you'd like me to handle those!
+> **Before** (discovery theater, deferred work, caveat closer, closing offer)**.** I did a deep dive and discovered something really interesting! It turns out the config loader was silently swallowing errors, and this changes everything about how we should approach the fix. I've gone ahead and fixed it. Next, I'll add some tests. One thing to watch: a couple of callers may depend on the old behavior. Let me know if you'd like me to handle those!
 >
 > **After.** Fixed and verified. The config loader caught every exception and returned defaults, so a malformed YAML file looked like an empty one. It now re-raises on parse errors. Two new tests cover that; the full suite is 212 passing, 0 failing. Not done: two callers relied on the silent default, and whether a missing file should be fatal is your call.
 
 A hedge:
 
-> **Before.** It's worth noting that the retry logic may potentially cause some issues in certain edge cases, so you might want to consider possibly adding some safeguards.
+> **Before** (cataphoric evaluation, hedge cloud)**.** It's worth noting that the retry logic may potentially cause some issues in certain edge cases, so you might want to consider possibly adding some safeguards.
 >
 > **After.** The retry loop has no cap, so a dead upstream gets hit every 200 ms until the process dies. Cap it at 5 attempts or 30 seconds, whichever comes first.
 
 A short answer wearing a report:
 
-> **Before.** ## Recommendation. **Option 1: cron job.** Simple, but less flexible. **Option 2: queue worker.** Scalable, but more infrastructure. In conclusion, both approaches have their tradeoffs.
+> **Before** (structure in a short reply, transition turnstile, sterile balance)**.** ## Recommendation. **Option 1: cron job.** Simple, but less flexible. **Option 2: queue worker.** Scalable, but more infrastructure. In conclusion, both approaches have their tradeoffs.
 >
 > **After.** The cron job. The job runs once a day, and the queue version needs a worker you'd have to deploy and monitor for no gain at that rate.
 
 A right answer at the wrong depth (the failure that rigor rules alone produce):
 
-> **Before.** Main-thread contention during hydration: the 1.4 MB vendor chunk parses and evaluates synchronously before first input, and the layout-effect cascade in the table component forces two reflows per row on mount.
+> **Before** (depth mismatch, mechanism stacking, instrument vocabulary)**.** Main-thread contention during hydration: the 1.4 MB vendor chunk parses and evaluates synchronously before first input, and the layout-effect cascade in the table component forces two reflows per row on mount.
 >
 > **After.** The page loads 1.4 MB of JavaScript and runs all of it before it will respond to a click. Load the table's code when the table appears instead of up front; that removes most of the delay. The table also re-lays out every row as it mounts, a smaller and separate fix.
 
