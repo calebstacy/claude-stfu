@@ -1,88 +1,152 @@
 # claude-stfu
 
-A rule set that sits in front of Claude's replies. Put it where Claude reads before every turn and it shapes the draft: answer first, at the level of the question, shortest complete reply, claims verified before they're asserted, none of the tells that mark text as machine-written. It governs how Claude talks to you. It is not an editor for text you hand it, and it is not a filter that runs after the fact. Every rule carries the name of the move it stops (praise opener, hedge cloud, hollow pivot), so when one slips through you can name it and Claude knows which rule fired; the rhetorical moves use the same names as the [slop-no-more](https://github.com/calebstacy/slop-no-more) scanner's findings.
+A set of prompt instructions intended to make Claude's replies shorter, more direct, and stricter about unsupported claims. It shapes generation. It does not verify facts or guarantee compliance.
 
-## What changes
+No model pass rate is claimed. The repository includes a repeatable specimen-capture harness, but it does not publish behavioral results until a reviewed capture exists. Model outputs are not expected to reproduce byte for byte.
 
-A question:
+## What it targets
 
-> **Before** (praise opener, false collaboration, template roadmap, sterile balance, closing offer)**.** Great question! Redis can absolutely work as a queue, and it's a popular choice for many teams. Let's break down the key considerations: **Pros:** simple, fast, you already run it. **Cons:** no built-in acknowledgement with lists, limited visibility. Ultimately, it depends on your use case. Let me know if you'd like me to dive deeper into any of these!
->
-> **After.** Yes for a simple job queue when you already run Redis. No once a job has to survive a worker dying mid-task, or you need retries and delays: you'd be building those yourself, and a broker like RabbitMQ or SQS has them built in.
+The rules tell Claude to:
 
-Agreement bait:
+- answer before explaining;
+- match the depth of the question;
+- distinguish observed facts from inference;
+- never invent logs, tests, measurements, sources, or actions taken;
+- report incomplete and unverified work plainly; and
+- remove recurring reply patterns such as praise openers, automatic agreement, discovery theater, template roadmaps, and closing offers.
 
-> **Before** (praise opener, fake agreement, deferred work)**.** You're absolutely right, the middleware is the likely culprit here! Let me take a look and fix it.
->
-> **After.** Not the middleware. The request never reaches the app: the gateway log shows the 401 at 14:02:11 and the app log has nothing at that timestamp. The gateway's client certificate expired yesterday; renewing it is the fix.
+Each failure pattern has a name so a miss can be discussed directly. The detailed [move catalog](references/move-catalog.md) is supporting editorial guidance, not evidence that a runtime rule "fired."
 
-A task report:
+## What it cannot guarantee
 
-> **Before** (discovery theater, deferred work, caveat closer, closing offer)**.** I did a deep dive and discovered something really interesting! It turns out the config loader was silently swallowing errors, and this changes everything about how we should approach the fix. I've gone ahead and fixed it. Next, I'll add some tests. One thing to watch: a couple of callers may depend on the old behavior. Let me know if you'd like me to handle those!
->
-> **After.** Fixed and verified. The config loader caught every exception and returned defaults, so a malformed YAML file looked like an empty one. It now re-raises on parse errors. Two new tests cover that; the full suite is 212 passing, 0 failing. Not done: two callers relied on the silent default, and whether a missing file should be fatal is your call.
+This is a prompt, not an enforcement layer. It cannot prove that a claim is true, force Claude to use a tool, or ensure that every reply follows every rule.
 
-A hedge:
+For deterministic checks on observable prose patterns, use [slop-no-more](https://github.com/calebstacy/slop-no-more). A clean scan still cannot establish truth, correctness, authorship, or writing quality.
 
-> **Before** (cataphoric evaluation, hedge cloud)**.** It's worth noting that the retry logic may potentially cause some issues in certain edge cases, so you might want to consider possibly adding some safeguards.
->
-> **After.** The retry loop has no cap, so a dead upstream gets hit every 200 ms until the process dies. Cap it at 5 attempts or 30 seconds, whichever comes first.
-
-A short answer wearing a report:
-
-> **Before** (structure in a short reply, transition turnstile, sterile balance)**.** ## Recommendation. **Option 1: cron job.** Simple, but less flexible. **Option 2: queue worker.** Scalable, but more infrastructure. In conclusion, both approaches have their tradeoffs.
->
-> **After.** The cron job. The job runs once a day, and the queue version needs a worker you'd have to deploy and monitor for no gain at that rate.
-
-A right answer at the wrong depth (the failure that rigor rules alone produce):
-
-> **Before** (depth mismatch, mechanism stacking, instrument vocabulary)**.** Main-thread contention during hydration: the 1.4 MB vendor chunk parses and evaluates synchronously before first input, and the layout-effect cascade in the table component forces two reflows per row on mount.
->
-> **After.** The page loads 1.4 MB of JavaScript and runs all of it before it will respond to a click. Load the table's code when the table appears instead of up front; that removes most of the delay. The table also re-lays out every row as it mounts, a smaller and separate fix.
+Claude Code also ships a built-in [Concise output style](https://code.claude.com/docs/en/output-styles#built-in-output-styles) for short, result-first replies. `claude-stfu` adds a stricter evidence contract, correction behavior, and named failure modes.
 
 ## Install
 
-Root install first. A skill loads when Claude decides it's relevant; root text is read every turn.
+### Claude Code output style
 
-**Claude Code, as an output style.** This replaces Claude Code's default reply guidance with these rules.
+Clone the repository into your personal skills directory.
+
+macOS or Linux:
 
 ```bash
+mkdir -p ~/.claude/skills
 git clone https://github.com/calebstacy/claude-stfu ~/.claude/skills/claude-stfu
 ```
 
+PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force "$HOME\.claude\skills"
+git clone https://github.com/calebstacy/claude-stfu "$HOME\.claude\skills\claude-stfu"
+```
+
+Copy the generated output style into Claude Code's personal output-style directory.
+
+macOS or Linux:
+
 ```bash
+mkdir -p ~/.claude/output-styles
 cp ~/.claude/skills/claude-stfu/output-style.md ~/.claude/output-styles/claude-stfu.md
 ```
 
-Then pick it with `/output-style claude-stfu`.
+PowerShell:
 
-**Claude Code, as a CLAUDE.md import.** Add one line to `~/.claude/CLAUDE.md` (every project) or a project's `CLAUDE.md`. The frontmatter comes along as text and does no harm.
-
+```powershell
+New-Item -ItemType Directory -Force "$HOME\.claude\output-styles"
+Copy-Item "$HOME\.claude\skills\claude-stfu\output-style.md" "$HOME\.claude\output-styles\claude-stfu.md"
 ```
+
+Run `/config`, select **Output style**, choose `claude-stfu`, then run `/clear` or start a new session. Claude Code reads the selected style at session start.
+
+The output style keeps Claude Code's built-in software-engineering instructions. It adds these reply instructions without removing the default guidance for scoping, security, comments, and verification.
+
+### Claude Code skill
+
+The clone above also installs `/claude-stfu` as a personal skill. Invoke it directly when you want the rules for the current conversation:
+
+```text
+/claude-stfu
+```
+
+Claude may also load it automatically when a request matches its description. Direct invocation is the reliable option.
+
+### CLAUDE.md import
+
+Add this line to `~/.claude/CLAUDE.md` for all local projects, or to a project's `CLAUDE.md` for that project:
+
+```text
 @~/.claude/skills/claude-stfu/SKILL.md
 ```
 
-**claude.ai and the desktop app.** Paste the body of `SKILL.md` (everything after the second `---`) into the field your surface reads every turn: a Project's instructions, the account-level preferences under Settings, or a custom style. Uploading the repo as a skill (Settings, Capabilities) also works, and is weaker: the skill loads when you complain about verbosity, root text loads every turn.
+Claude Code may ask you to approve an external import the first time it sees one.
 
-**API.** Put the body in the `system` parameter.
+### Claude app
 
-**Claude Code, as a skill only.** The clone above is enough. Claude loads it when you say it's being verbose, sycophantic, or sounds like AI, then keeps it for the conversation.
+For account or project instructions, paste the contents of [`rules.md`](rules.md) into the relevant instructions field.
 
-## Why it sits in front of generation
+To install it as a custom skill, make a ZIP whose top-level folder is named `claude-stfu` and contains `SKILL.md` plus `references/`. Upload that ZIP through **Customize > Skills > Add > Create skill > Upload a skill**. GitHub's source ZIP uses a branch-suffixed folder name, so extract and re-zip it first.
 
-A rule that runs after the draft (a Stop hook that blocks and asks for a rewrite, a scanner over the output) costs a second generation on every catch, and the rewrite starts from the shape of the draft it replaces. Rules in front of generation decide the shape once.
+An uploaded skill loads when Claude decides it is relevant. Account or project instructions are the better fit when you want the rules applied by default.
 
-Rules in a prompt also leak. In [slop-no-more](https://github.com/calebstacy/slop-no-more)'s measurement, a one-line "no em dashes" instruction was followed on 7 of 10 test strings, and the same rule as a regex caught 10 of 10. That's why this pack is written at the move level, with the reason each move damages the argument: a bare ban gets paraphrased around, a mechanism is harder to route past. It's still not a guarantee, and no measurement of this pack's pass rate on chat replies exists yet. For a document where a hard gate matters, run slop-no-more over the output.
+### API
+
+Send the contents of [`rules.md`](rules.md) in the Messages API's top-level `system` parameter on every request where the behavior should apply. The API is stateless, so the instruction must be included again on the next request.
+
+## Scope
+
+The rules govern Claude's conversational replies and work reports. They do not impose the same voice on copy, fiction, documentation, or another artifact you ask Claude to author. Your explicit tone, format, and depth instructions override the style defaults. Truth, safety, permissions, and required completeness remain higher priority.
+
+Output styles apply to Claude Code's main conversation. Ordinary subagents use their own system prompts.
+
+## Evidence and evaluation
+
+The [`evals/`](evals/) harness separates recorded behavior from marketing examples. A publishable specimen must include:
+
+- the exact prompt and supplied evidence;
+- the raw baseline and treatment outputs;
+- the requested and returned model identifiers;
+- the date, settings, repository commit, and rules hash;
+- deterministic measurements such as word count and configured scanner findings; and
+- a disclosed human review of correctness, unsupported claims, completeness, and depth.
+
+One generation per condition is a specimen, not a benchmark or general model pass-rate estimate. Generated reports must quote the stored raw output without editing it.
+
+Raw captures stay in the git-ignored `evals/runs/` directory because CLI diagnostics can contain local paths or secrets. The [evaluation protocol](evals/protocol.md) requires a completed human review, integrity validation, path normalization, and a secret scan before `evals/public/` can be committed.
+
+Until the repository contains a published, reviewed run, it has no evidence for a before-and-after claim.
+
+## Repository layout
+
+- [`rules.md`](rules.md) is the canonical always-on instruction body.
+- [`SKILL.md`](SKILL.md) is the generated Claude skill wrapper.
+- [`output-style.md`](output-style.md) is the generated Claude Code output-style wrapper.
+- [`references/move-catalog.md`](references/move-catalog.md) holds the detailed diagnostic vocabulary.
+- [`evals/`](evals/) holds frozen prompts, captured runs, and the evaluation protocol.
+
+Edit `rules.md`, then regenerate the two wrappers. Do not edit the generated files by hand.
+
+```bash
+python scripts/generate_artifacts.py
+python scripts/generate_artifacts.py --check
+```
 
 ## Tuning
 
-- Length. The pack sets no word cap; "shortest reply that fully answers" is the rule. Add a cap to your copy if you want one ("under 150 words unless asked for more").
-- Emoji and exclamation marks are allowed only when the person uses them first. Change that line if you want them.
-- The Never list is literal and short on purpose. When a phrase slips through, add the phrase. When a move slips through, add the move with the reason it damages the argument, not a phrase alone.
+- To enforce a word cap, add one with an explicit exception for requests that need more detail.
+- To allow exclamation marks or emoji by default, change the corresponding voice rule in `rules.md`.
+- When a phrase slips through, add a literal prohibition only if the phrase itself is the problem. When the underlying rhetorical move is the problem, update the move definition and preserve the reason.
+- Keep observable checks separate from judgment. A regex can identify an em dash. It cannot decide whether an answer is correct or appropriately detailed.
 
 ## Lineage
 
-Distilled from four sources: the author's own Claude Code output style, in daily use since August 2026; Claude Code's built-in reply guidance (lead with the outcome, one idea per sentence, code out of prose); the move catalog in [slop-no-more](https://github.com/calebstacy/slop-no-more), which rests on Swales' move analysis (1990) and Hyland's metadiscourse work (2005); and the claim gates from a case-study writing skill (tense tracks the truth state, sequence is not causality, an ordinary example is not a revelation), generalized here to any claim Claude makes.
+The pack draws from the author's own Claude Code preferences and case-study claim rules (author-reported internal inputs), Anthropic's [output-style guidance](https://code.claude.com/docs/en/output-styles), the move catalog in [`slop-no-more` v0.2.1](https://github.com/calebstacy/slop-no-more/tree/v0.2.1), John Swales' 1990 [*Genre Analysis*](https://shop.cambridge.org/english/product/2700033225), and Ken Hyland's 2005 [*Metadiscourse*](https://www.bloomsbury.com/us/metadiscourse-9780826476104/).
+
+Those sources informed the rules. They do not validate this pack's behavioral effect.
 
 ## License
 
