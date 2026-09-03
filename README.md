@@ -1,152 +1,94 @@
 # claude-stfu
 
-A set of prompt instructions intended to make Claude's replies shorter, more direct, and stricter about unsupported claims. It shapes generation. It does not verify facts or guarantee compliance.
+Make Claude answer the question, cut the ass-kissing, and stop claiming it checked things it never checked.
 
-No model pass rate is claimed. The repository includes a repeatable specimen-capture harness, but it does not publish behavioral results until a reviewed capture exists. Model outputs are not expected to reproduce byte for byte.
+`claude-stfu` is a reusable set of reply instructions for Claude Code, Claude, and the API. It tells Claude to lead with the answer, keep the useful detail, challenge bad assumptions, and be honest about what it actually did.
 
-## What it targets
+The goal isn't tiny answers. It's answers with no wasted motion.
 
-The rules tell Claude to:
+## What it changes
 
-- answer before explaining;
-- match the depth of the question;
-- distinguish observed facts from inference;
-- never invent logs, tests, measurements, sources, or actions taken;
-- report incomplete and unverified work plainly; and
-- remove recurring reply patterns such as praise openers, automatic agreement, discovery theater, template roadmaps, and closing offers.
+- **Answer first.** No warm-up paragraph before the thing you asked for.
+- **No automatic agreement.** Claude checks your premise instead of rewarding it.
+- **No fake certainty.** It doesn't say "fixed," "verified," or "the logs show" unless it actually checked.
+- **No work theater.** You get the result, not a play-by-play of routine tool calls.
+- **No canned ending.** The reply stops when the answer is complete.
+- **Enough detail to act.** Short when the question is simple, thorough when it isn't.
 
-Each failure pattern has a name so a miss can be discussed directly. The detailed [move catalog](references/move-catalog.md) is supporting editorial guidance, not evidence that a runtime rule "fired."
+It also gives recurring bad habits names such as `praise opener`, `discovery theater`, and `premature done`, so you can point to the exact thing that annoyed you.
 
-## What it cannot guarantee
+## Install in Claude Code
 
-This is a prompt, not an enforcement layer. It cannot prove that a claim is true, force Claude to use a tool, or ensure that every reply follows every rule.
-
-For deterministic checks on observable prose patterns, use [slop-no-more](https://github.com/calebstacy/slop-no-more). A clean scan still cannot establish truth, correctness, authorship, or writing quality.
-
-Claude Code also ships a built-in [Concise output style](https://code.claude.com/docs/en/output-styles#built-in-output-styles) for short, result-first replies. `claude-stfu` adds a stricter evidence contract, correction behavior, and named failure modes.
-
-## Install
-
-### Claude Code output style
-
-Clone the repository into your personal skills directory.
+### Always on
 
 macOS or Linux:
 
 ```bash
-mkdir -p ~/.claude/skills
+mkdir -p ~/.claude/skills ~/.claude/output-styles
 git clone https://github.com/calebstacy/claude-stfu ~/.claude/skills/claude-stfu
-```
-
-PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force "$HOME\.claude\skills"
-git clone https://github.com/calebstacy/claude-stfu "$HOME\.claude\skills\claude-stfu"
-```
-
-Copy the generated output style into Claude Code's personal output-style directory.
-
-macOS or Linux:
-
-```bash
-mkdir -p ~/.claude/output-styles
 cp ~/.claude/skills/claude-stfu/output-style.md ~/.claude/output-styles/claude-stfu.md
 ```
 
 PowerShell:
 
 ```powershell
-New-Item -ItemType Directory -Force "$HOME\.claude\output-styles"
+New-Item -ItemType Directory -Force "$HOME\.claude\skills", "$HOME\.claude\output-styles"
+git clone https://github.com/calebstacy/claude-stfu "$HOME\.claude\skills\claude-stfu"
 Copy-Item "$HOME\.claude\skills\claude-stfu\output-style.md" "$HOME\.claude\output-styles\claude-stfu.md"
 ```
 
-Run `/config`, select **Output style**, choose `claude-stfu`, then run `/clear` or start a new session. Claude Code reads the selected style at session start.
+Run `/config`, choose **Output style**, select `claude-stfu`, then run `/clear` or start a new session.
 
-The output style keeps Claude Code's built-in software-engineering instructions. It adds these reply instructions without removing the default guidance for scoping, security, comments, and verification.
+This keeps Claude Code's normal coding instructions and changes how Claude replies in the main conversation.
 
-### Claude Code skill
+### Only when you want it
 
-The clone above also installs `/claude-stfu` as a personal skill. Invoke it directly when you want the rules for the current conversation:
+The clone above also installs a skill. Run:
 
 ```text
 /claude-stfu
 ```
 
-Claude may also load it automatically when a request matches its description. Direct invocation is the reliable option.
+### Through CLAUDE.md
 
-### CLAUDE.md import
-
-Add this line to `~/.claude/CLAUDE.md` for all local projects, or to a project's `CLAUDE.md` for that project:
+Add this to `~/.claude/CLAUDE.md` for every project, or to one project's `CLAUDE.md`:
 
 ```text
 @~/.claude/skills/claude-stfu/SKILL.md
 ```
 
-Claude Code may ask you to approve an external import the first time it sees one.
+See the [install notes](references/install-notes.md) for the less common session, subagent, ZIP, and API details.
 
-### Claude app
+## Claude app and API
 
-For account or project instructions, paste the contents of [`rules.md`](rules.md) into the relevant instructions field.
+In the Claude app, paste [`rules.md`](rules.md) into your account or project instructions.
 
-To install it as a custom skill, make a ZIP whose top-level folder is named `claude-stfu` and contains `SKILL.md` plus `references/`. Upload that ZIP through **Customize > Skills > Add > Create skill > Upload a skill**. GitHub's source ZIP uses a branch-suffixed folder name, so extract and re-zip it first.
+For the API, send the same text in the top-level `system` parameter on each request.
 
-An uploaded skill loads when Claude decides it is relevant. Account or project instructions are the better fit when you want the rules applied by default.
+## What's in the repo
 
-### API
+- [`rules.md`](rules.md): the actual instructions.
+- [`SKILL.md`](SKILL.md): the Claude skill.
+- [`output-style.md`](output-style.md): the Claude Code output style.
+- [`references/move-catalog.md`](references/move-catalog.md): names and definitions for the annoying moves.
+- [`evals/`](evals/): frozen prompts and tooling for capturing real baseline and treatment outputs.
 
-Send the contents of [`rules.md`](rules.md) in the Messages API's top-level `system` parameter on every request where the behavior should apply. The API is stateless, so the instruction must be included again on the next request.
-
-## Scope
-
-The rules govern Claude's conversational replies and work reports. They do not impose the same voice on copy, fiction, documentation, or another artifact you ask Claude to author. Your explicit tone, format, and depth instructions override the style defaults. Truth, safety, permissions, and required completeness remain higher priority.
-
-Output styles apply to Claude Code's main conversation. Ordinary subagents use their own system prompts.
-
-## Evidence and evaluation
-
-The [`evals/`](evals/) harness separates recorded behavior from marketing examples. A publishable specimen must include:
-
-- the exact prompt and supplied evidence;
-- the raw baseline and treatment outputs;
-- the requested and returned model identifiers;
-- the date, settings, repository commit, and rules hash;
-- deterministic measurements such as word count and configured scanner findings; and
-- a disclosed human review of correctness, unsupported claims, completeness, and depth.
-
-One generation per condition is a specimen, not a benchmark or general model pass-rate estimate. Generated reports must quote the stored raw output without editing it.
-
-Raw captures stay in the git-ignored `evals/runs/` directory because CLI diagnostics can contain local paths or secrets. The [evaluation protocol](evals/protocol.md) requires a completed human review, integrity validation, path normalization, and a secret scan before `evals/public/` can be committed.
-
-Until the repository contains a published, reviewed run, it has no evidence for a before-and-after claim.
-
-## Repository layout
-
-- [`rules.md`](rules.md) is the canonical always-on instruction body.
-- [`SKILL.md`](SKILL.md) is the generated Claude skill wrapper.
-- [`output-style.md`](output-style.md) is the generated Claude Code output-style wrapper.
-- [`references/move-catalog.md`](references/move-catalog.md) holds the detailed diagnostic vocabulary.
-- [`evals/`](evals/) holds frozen prompts, captured runs, and the evaluation protocol.
-
-Edit `rules.md`, then regenerate the two wrappers. Do not edit the generated files by hand.
+`rules.md` is the source of truth. After changing it, regenerate the two wrappers:
 
 ```bash
 python scripts/generate_artifacts.py
 python scripts/generate_artifacts.py --check
 ```
 
-## Tuning
+## Does it actually work?
 
-- To enforce a word cap, add one with an explicit exception for requests that need more detail.
-- To allow exclamation marks or emoji by default, change the corresponding voice rule in `rules.md`.
-- When a phrase slips through, add a literal prohibition only if the phrase itself is the problem. When the underlying rhetorical move is the problem, update the move definition and preserve the reason.
-- Keep observable checks separate from judgment. A regex can identify an em dash. It cannot decide whether an answer is correct or appropriately detailed.
+It's a prompt, not a hard filter. Claude can still miss.
 
-## Lineage
+The first README used invented before-and-after examples. That's exactly the behavior this project is supposed to stop, so they're gone. [`evals/`](evals/) now captures the real prompt, model information, and raw outputs together. When there's a reviewed run worth publishing, it'll go here.
 
-The pack draws from the author's own Claude Code preferences and case-study claim rules (author-reported internal inputs), Anthropic's [output-style guidance](https://code.claude.com/docs/en/output-styles), the move catalog in [`slop-no-more` v0.2.1](https://github.com/calebstacy/slop-no-more/tree/v0.2.1), John Swales' 1990 [*Genre Analysis*](https://shop.cambridge.org/english/product/2700033225), and Ken Hyland's 2005 [*Metadiscourse*](https://www.bloomsbury.com/us/metadiscourse-9780826476104/).
+## Sources
 
-Those sources informed the rules. They do not validate this pack's behavioral effect.
+See [lineage and sources](references/lineage.md).
 
 ## License
 
